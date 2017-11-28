@@ -12,19 +12,23 @@ positive_count=0
 negative_count=0
 tweets_count=0
 
+#A topicpartition ins a named tuple, consisting of topic name and partition.
 tp=TopicPartition(('ktwitter'),(0))
 tp1=TopicPartition(('ktwitter'),(1))
-print("Partitions For the Given topic:\n "+str(myconsumer.partitions_for_topic('ktwitter')))
-#lists the total partitions present in the topic as set , not just the ones assigned.
 
+#lists the total partitions present in the topic as set , not just the ones assigned.
+print("Partitions For the Given topic:\n "+str(myconsumer.partitions_for_topic('ktwitter')))
+
+#When have to specify more than one topicpartitions enclose them in a list
 myconsumer.assign([tp,tp1])
 print('Assigned: ')
 print(myconsumer.assignment())
 
 myconsumer.seek_to_beginning()
-#If partitions are not assigned then seek_to_beginning will fail, when using topic name in the consumer instance ,partitions are not assigned until iterating
+#When using topic name in the consumer instance ,partitions are not assigned until iterating then seek_to_beginning will fail,
 
 print("Offset To Read From: "+str(myconsumer.position(tp)))
+
 for message in myconsumer:
    tweets_count=tweets_count+1
    myconsumer.poll()
@@ -41,7 +45,8 @@ for message in myconsumer:
 
 print("Last Commited Offset for the partition: "+str(myconsumer.committed(tp)))
 print("Offset for the upcoming message: "+str(myconsumer.end_offsets([tp])))			 
-#Seeking to a particulr offset   
+
+#Seeking to a particular offset
    
 print("\nTotal Tweets processed: %d" % tweets_count)   
 print(("Positive Tweets:%d \nNegative TWeets : %d")%(positive_count,negative_count))

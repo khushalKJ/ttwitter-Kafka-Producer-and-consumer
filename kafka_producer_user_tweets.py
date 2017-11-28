@@ -16,7 +16,10 @@ auth=tweepy.OAuthHandler(consumer_key,consumer_secret)
 auth.set_access_token(access_key,access_secret)
 api = tweepy.API(auth)
 
+#Creating a Kafka Producer Instance
 myproducer=KafkaProducer(bootstrap_servers='sandbox.hortonworks.com:6667',acks=1,retries=1)
+
+print("List of Partitions for topic 'ktwitter': "+str(myproducer.partitions_for('ktwitter')))
 
 with open('twitterhandle.txt','r+') as f:
    for handle in f:
@@ -24,7 +27,7 @@ with open('twitterhandle.txt','r+') as f:
      print("Getting Tweets from "+str(handle).strip())
    
      alltweets = []
-     tweets=api.user_timeline(screen_name=handle,count=20)
+     tweets=api.user_timeline(screen_name=handle,count=10)
      alltweets.extend(tweets)
    
      for x in range(len(alltweets)):
@@ -35,15 +38,19 @@ with open('twitterhandle.txt','r+') as f:
           print("KafkaTimeoutError Encountered While Sending...: "+err)
 
      try:
+	    #Flush is blocking until all messages or atleast put on the network , it does not guarantee delivery or success
         myproducer.flush()
      except KafkaTimeoutError as err:
       print("KafkaTimeoutError Encountered While Sending...: "+err)
       
-     #print("Alltweets from "+ str(handle).strip()+" flushed")
+     
+	 #Get() method is blocking until message is sent or timedout, Returns a recordmetadata object which contains details like topic, partition written to and the offset
+	 #For a Nonblocking send and still to get partition and offset details , use future.values variable
+     return_Record_Metadata=future.get()
      
      if future.is_done:
-         print("Write successful to topic: "+future.get().topic+" partition: "+str(future.get().partition)+"\n")
+         print("Write successful to topic: "+return_Record_Metadata.topic+" partition: "+str(return_Record_Metadata.partition)+" Offset:"+str(return_Record_Metadata.offset)+"\n")
      else:
-         print("Write Failed to topic: "+future.get().topic+"partitions: "+str(future.get().partition))
+         print("Write Failed to topic: "+return_Record_Metadata.topic+"partitions: "+str(return_Record_Metadata.partition))
 
 myproducer.close()
